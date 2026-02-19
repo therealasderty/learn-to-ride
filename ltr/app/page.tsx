@@ -20,6 +20,8 @@ export default function HomePage() {
   const [activeTags, setActiveTags] = useState<string[]>([])
   const [allTags, setAllTags] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [pendingTags, setPendingTags] = useState<string[]>([])
 
   useEffect(() => { fetchTricks() }, [])
 
@@ -56,11 +58,32 @@ export default function HomePage() {
     setActiveTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
   }
 
-  const clearFilters = () => { setSearch(''); setActiveTags([]) }
+  const togglePendingTag = (tag: string) => {
+    setPendingTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+  }
+
+  const openFilter = () => {
+    setPendingTags([...activeTags])
+    setFilterOpen(true)
+  }
+
+  const applyFilter = () => {
+    setActiveTags(pendingTags)
+    setFilterOpen(false)
+  }
+
+  const clearFilters = () => {
+    setSearch('')
+    setActiveTags([])
+    setPendingTags([])
+    setFilterOpen(false)
+  }
+
   const displayTags = allTags.length > 0 ? allTags : PRESET_TAGS
 
   return (
     <div style={{ minHeight: '100vh' }}>
+      {/* Header */}
       <header style={{
         borderBottom: '1px solid var(--border)',
         position: 'sticky', top: 0,
@@ -79,20 +102,38 @@ export default function HomePage() {
           <div style={{ flex: 1, maxWidth: 400 }}>
             <input
               type="text"
-              placeholder="SEARCH TRICKS..."
+              placeholder="SEARCH..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{ fontSize: 11, padding: '8px 12px', letterSpacing: '0.05em' }}
             />
           </div>
+          <button
+            onClick={openFilter}
+            style={{
+              flexShrink: 0,
+              background: activeTags.length > 0 ? 'var(--accent)' : 'transparent',
+              border: '1px solid var(--border)',
+              color: activeTags.length > 0 ? '#000' : 'var(--text)',
+              fontFamily: 'Space Mono', fontSize: 11, fontWeight: 700,
+              padding: '8px 14px', cursor: 'pointer', letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}
+          >
+            FILTRI {activeTags.length > 0 && `(${activeTags.length})`}
+          </button>
         </div>
 
+        {/* Desktop tag bar — hidden on mobile */}
         <div style={{
           borderTop: '1px solid var(--border)',
           padding: '10px 24px',
           overflowX: 'auto',
           display: 'flex', gap: 6, alignItems: 'center',
-        }}>
+        }}
+          className="desktop-tags"
+        >
           {activeTags.length > 0 && (
             <button onClick={clearFilters} style={{
               background: 'var(--accent2)', border: 'none', color: '#fff',
@@ -109,6 +150,93 @@ export default function HomePage() {
         </div>
       </header>
 
+      {/* Filter modal */}
+      {filterOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          background: 'rgba(0,0,0,0.7)',
+          display: 'flex', alignItems: 'flex-end',
+        }}
+          onClick={() => setFilterOpen(false)}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%',
+              background: 'var(--surface)',
+              borderTop: '2px solid var(--accent)',
+              padding: '24px 20px 32px',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+            }}
+          >
+            {/* Modal header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <span style={{ fontFamily: 'Bebas Neue', fontSize: 22, letterSpacing: '0.1em', color: 'var(--accent)' }}>
+                FILTRI
+              </span>
+              <button onClick={() => setFilterOpen(false)} style={{
+                background: 'transparent', border: '1px solid var(--border)',
+                color: 'var(--text)', fontFamily: 'Space Mono', fontSize: 11,
+                padding: '6px 12px', cursor: 'pointer',
+              }}>✕</button>
+            </div>
+
+            {/* Tags grid */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+              {displayTags.map(tag => (
+                <span
+                  key={tag}
+                  onClick={() => togglePendingTag(tag)}
+                  style={{
+                    padding: '10px 16px',
+                    background: pendingTags.includes(tag) ? 'var(--accent)' : 'var(--surface2)',
+                    border: `1px solid ${pendingTags.includes(tag) ? 'var(--accent)' : 'var(--border)'}`,
+                    color: pendingTags.includes(tag) ? '#000' : 'var(--text)',
+                    fontFamily: 'Space Mono', fontSize: 12, fontWeight: 700,
+                    textTransform: 'uppercase', letterSpacing: '0.05em',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={applyFilter}
+                style={{
+                  flex: 1, padding: '14px',
+                  background: 'var(--accent)', border: 'none',
+                  color: '#000', fontFamily: 'Space Mono', fontSize: 13,
+                  fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
+                  cursor: 'pointer',
+                }}
+              >
+                APPLICA {pendingTags.length > 0 && `(${pendingTags.length})`}
+              </button>
+              <button
+                onClick={clearFilters}
+                style={{
+                  padding: '14px 20px',
+                  background: 'transparent',
+                  border: '1px solid var(--border)',
+                  color: 'var(--muted)', fontFamily: 'Space Mono', fontSize: 12,
+                  textTransform: 'uppercase', letterSpacing: '0.1em',
+                  cursor: 'pointer',
+                }}
+              >
+                RESET
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Grid */}
       <main className="container" style={{ padding: '24px' }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', flexDirection: 'column', gap: 16 }}>
@@ -132,6 +260,15 @@ export default function HomePage() {
           </div>
         )}
       </main>
+
+      <style>{`
+        @media (min-width: 768px) {
+          .desktop-tags { display: flex !important; }
+        }
+        @media (max-width: 767px) {
+          .desktop-tags { display: none !important; }
+        }
+      `}</style>
     </div>
   )
 }
