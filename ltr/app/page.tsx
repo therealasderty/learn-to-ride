@@ -49,7 +49,7 @@ export default function HomePage() {
       )
     }
     if (activeTags.length > 0) {
-      result = result.filter(t => activeTags.every(tag => t.tags.includes(tag)))
+      result = result.filter(t => activeTags.some(tag => t.tags.includes(tag)))
     }
     setFiltered(result)
   }, [tricks, search, activeTags])
@@ -83,7 +83,6 @@ export default function HomePage() {
 
   return (
     <div style={{ minHeight: '100vh' }}>
-      {/* Header */}
       <header style={{
         borderBottom: '1px solid var(--border)',
         position: 'sticky', top: 0,
@@ -110,6 +109,7 @@ export default function HomePage() {
           </div>
           <button
             onClick={openFilter}
+            className="mobile-only"
             style={{
               flexShrink: 0,
               background: activeTags.length > 0 ? 'var(--accent)' : 'transparent',
@@ -125,15 +125,13 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* Desktop tag bar — hidden on mobile */}
-        <div style={{
+        {/* Desktop tag bar */}
+        <div className="desktop-tags" style={{
           borderTop: '1px solid var(--border)',
           padding: '10px 24px',
           overflowX: 'auto',
           display: 'flex', gap: 6, alignItems: 'center',
-        }}
-          className="desktop-tags"
-        >
+        }}>
           {activeTags.length > 0 && (
             <button onClick={clearFilters} style={{
               background: 'var(--accent2)', border: 'none', color: '#fff',
@@ -150,7 +148,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Filter modal */}
+      {/* Filter modal — mobile only */}
       {filterOpen && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 200,
@@ -170,7 +168,6 @@ export default function HomePage() {
               overflowY: 'auto',
             }}
           >
-            {/* Modal header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <span style={{ fontFamily: 'Bebas Neue', fontSize: 22, letterSpacing: '0.1em', color: 'var(--accent)' }}>
                 FILTRI
@@ -182,7 +179,6 @@ export default function HomePage() {
               }}>✕</button>
             </div>
 
-            {/* Tags grid */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
               {displayTags.map(tag => (
                 <span
@@ -195,8 +191,7 @@ export default function HomePage() {
                     color: pendingTags.includes(tag) ? '#000' : 'var(--text)',
                     fontFamily: 'Space Mono', fontSize: 12, fontWeight: 700,
                     textTransform: 'uppercase', letterSpacing: '0.05em',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
+                    cursor: 'pointer', transition: 'all 0.15s ease',
                   }}
                 >
                   {tag}
@@ -204,31 +199,24 @@ export default function HomePage() {
               ))}
             </div>
 
-            {/* Actions */}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={applyFilter}
-                style={{
-                  flex: 1, padding: '14px',
-                  background: 'var(--accent)', border: 'none',
-                  color: '#000', fontFamily: 'Space Mono', fontSize: 13,
-                  fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
-                  cursor: 'pointer',
-                }}
-              >
+              <button onClick={applyFilter} style={{
+                flex: 1, padding: '14px',
+                background: 'var(--accent)', border: 'none',
+                color: '#000', fontFamily: 'Space Mono', fontSize: 13,
+                fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
+                cursor: 'pointer',
+              }}>
                 APPLICA {pendingTags.length > 0 && `(${pendingTags.length})`}
               </button>
-              <button
-                onClick={clearFilters}
-                style={{
-                  padding: '14px 20px',
-                  background: 'transparent',
-                  border: '1px solid var(--border)',
-                  color: 'var(--muted)', fontFamily: 'Space Mono', fontSize: 12,
-                  textTransform: 'uppercase', letterSpacing: '0.1em',
-                  cursor: 'pointer',
-                }}
-              >
+              <button onClick={clearFilters} style={{
+                padding: '14px 20px',
+                background: 'transparent',
+                border: '1px solid var(--border)',
+                color: 'var(--muted)', fontFamily: 'Space Mono', fontSize: 12,
+                textTransform: 'uppercase', letterSpacing: '0.1em',
+                cursor: 'pointer',
+              }}>
                 RESET
               </button>
             </div>
@@ -264,6 +252,7 @@ export default function HomePage() {
       <style>{`
         @media (min-width: 768px) {
           .desktop-tags { display: flex !important; }
+          .mobile-only { display: none !important; }
         }
         @media (max-width: 767px) {
           .desktop-tags { display: none !important; }
