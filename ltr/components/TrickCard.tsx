@@ -8,6 +8,16 @@ interface TrickCardProps {
   onTagClick?: (tag: string) => void
 }
 
+function getEmbedUrl(url: string): string | null {
+  // YouTube
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&rel=0`
+  // Vimeo
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/)
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`
+  return null
+}
+
 export default function TrickCard({ trick, onTagClick }: TrickCardProps) {
   const [lightbox, setLightbox] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -18,10 +28,8 @@ export default function TrickCard({ trick, onTagClick }: TrickCardProps) {
   const isVideo = trick.url?.match(/\.(mp4|webm|mov)(\?|$)/i)
   const isGif = trick.url?.match(/\.gif(\?|$)/i)
   const isExternal = !!trick.external_url
-  const isYoutube = trick.external_url?.includes('youtube') || trick.external_url?.includes('youtu.be')
-  const isVimeo = trick.external_url?.includes('vimeo')
+  const embedUrl = trick.external_url ? getEmbedUrl(trick.external_url) : null
 
-  // Desktop hover
   const handleMouseEnter = () => {
     if (isVideo && videoRef.current && !isTouchDevice) {
       videoRef.current.play()
@@ -37,15 +45,11 @@ export default function TrickCard({ trick, onTagClick }: TrickCardProps) {
   }
 
   const handleClick = () => {
-    if (isExternal) {
-      window.open(trick.external_url, '_blank')
-    } else {
-      if (isVideo && videoRef.current) {
-        videoRef.current.pause()
-        setIsPlaying(false)
-      }
-      setLightbox(true)
+    if (isVideo && videoRef.current) {
+      videoRef.current.pause()
+      setIsPlaying(false)
     }
+    setLightbox(true)
   }
 
   const closeLightbox = () => {
@@ -68,34 +72,53 @@ export default function TrickCard({ trick, onTagClick }: TrickCardProps) {
       <div
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
         style={{
           background: 'var(--surface)', border: '1px solid var(--border)',
           overflow: 'hidden', cursor: 'pointer',
           transition: 'border-color 0.2s ease, transform 0.2s ease', position: 'relative',
         }}
-        onMouseOver={e => { if (!isTouchDevice) { e.currentTarget.style.borderColor = isExternal ? (isYoutube ? '#ff0000' : '#1ab7ea') : 'var(--accent)'; e.currentTarget.style.transform = 'translateY(-2px)' }}}
+        onMouseOver={e => { if (!isTouchDevice) { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'translateY(-2px)' }}}
         onMouseOut={e => { if (!isTouchDevice) { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)' }}}
-        onClick={handleClick}
       >
         <div style={{ position: 'relative', overflow: 'hidden', background: '#000' }}>
 
-          {/* External thumbnail */}
+          {/* External — thumbnail con play */}
           {isExternal && trick.thumbnail_url && (
-            <img src={trick.thumbnail_url} alt={trick.title}
-              style={{ width: '100%', height: 'auto', display: 'block' }} />
+            <>
+              <img src={trick.thumbnail_url} alt={trick.title}
+                style={{ width: '100%', height: 'auto', display: 'block' }} />
+              <div style={{
+                position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(0,0,0,0.3)', pointerEvents: 'none',
+              }}>
+                <div style={{ width: 44, height: 44, border: '2px solid var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 14 14" fill="var(--accent)"><polygon points="3,1 13,7 3,13" /></svg>
+                </div>
+              </div>
+            </>
           )}
 
-          {/* Local video — autoplay loop on mobile, hover on desktop */}
+          {/* Local video */}
           {!isExternal && isVideo && (
-            <video
-              ref={videoRef}
-              src={trick.url}
-              loop
-              muted
-              playsInline
-              autoPlay={isTouchDevice}
-              style={{ width: '100%', height: 'auto', display: 'block' }}
-            />
+            <>
+              <video ref={videoRef} src={trick.url} loop muted playsInline
+                autoPlay={isTouchDevice}
+                style={{ width: '100%', height: 'auto', display: 'block' }} />
+              {!isTouchDevice && (
+                <div style={{
+                  position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: isPlaying ? 'transparent' : 'rgba(0,0,0,0.3)', transition: 'background 0.2s ease',
+                  pointerEvents: 'none',
+                }}>
+                  {!isPlaying && (
+                    <div style={{ width: 36, height: 36, border: '2px solid var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="var(--accent)"><polygon points="3,1 13,7 3,13" /></svg>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           )}
 
           {/* GIF / image */}
@@ -104,46 +127,9 @@ export default function TrickCard({ trick, onTagClick }: TrickCardProps) {
               style={{ width: '100%', height: 'auto', display: 'block' }} />
           )}
 
-          {/* Desktop play overlay */}
-          {!isExternal && isVideo && !isTouchDevice && (
-            <div style={{
-              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: isPlaying ? 'transparent' : 'rgba(0,0,0,0.3)', transition: 'background 0.2s ease',
-              pointerEvents: 'none',
-            }}>
-              {!isPlaying && (
-                <div style={{ width: 36, height: 36, border: '2px solid var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="var(--accent)"><polygon points="3,1 13,7 3,13" /></svg>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* External play overlay */}
-          {isExternal && (
-            <div style={{
-              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(0,0,0,0.3)', pointerEvents: 'none',
-            }}>
-              <div style={{
-                width: 44, height: 44,
-                background: isYoutube ? '#ff0000' : '#1ab7ea',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <svg width="16" height="16" viewBox="0 0 14 14" fill="#fff"><polygon points="3,1 13,7 3,13" /></svg>
-              </div>
-            </div>
-          )}
-
-          {/* Badges */}
+          {/* GIF badge */}
           {isGif && (
             <div style={{ position: 'absolute', top: 8, right: 8, background: 'var(--accent)', color: '#000', fontSize: 9, fontFamily: 'Space Mono', fontWeight: 700, padding: '2px 5px', letterSpacing: '0.1em' }}>GIF</div>
-          )}
-          {isYoutube && (
-            <div style={{ position: 'absolute', top: 8, right: 8, background: '#ff0000', color: '#fff', fontSize: 9, fontFamily: 'Space Mono', fontWeight: 700, padding: '2px 5px', letterSpacing: '0.1em' }}>YOUTUBE</div>
-          )}
-          {isVimeo && (
-            <div style={{ position: 'absolute', top: 8, right: 8, background: '#1ab7ea', color: '#fff', fontSize: 9, fontFamily: 'Space Mono', fontWeight: 700, padding: '2px 5px', letterSpacing: '0.1em' }}>VIMEO</div>
           )}
         </div>
 
@@ -176,8 +162,17 @@ export default function TrickCard({ trick, onTagClick }: TrickCardProps) {
             fontSize: 11, padding: '6px 12px', cursor: 'pointer', letterSpacing: '0.1em', zIndex: 1001,
           }}>ESC ✕</button>
 
-          <div onClick={e => e.stopPropagation()} style={{ maxWidth: '90vw', maxHeight: '80vh', width: '100%' }}>
-            {isVideo ? (
+          <div onClick={e => e.stopPropagation()} style={{ maxWidth: '90vw', width: '100%' }}>
+            {isExternal && embedUrl ? (
+              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+                <iframe
+                  src={embedUrl}
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            ) : isVideo ? (
               <video ref={lightboxVideoRef} src={trick.url} loop muted={false} controls playsInline
                 style={{ width: '100%', maxHeight: '75vh', objectFit: 'contain' }} />
             ) : (
