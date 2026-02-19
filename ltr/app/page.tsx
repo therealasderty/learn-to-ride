@@ -21,6 +21,7 @@ export default function HomePage() {
   const [allTags, setAllTags] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [filterOpen, setFilterOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const [pendingTags, setPendingTags] = useState<string[]>([])
 
   useEffect(() => { fetchTricks() }, [])
@@ -77,6 +78,7 @@ export default function HomePage() {
     setActiveTags([])
     setPendingTags([])
     setFilterOpen(false)
+    setSearchOpen(false)
   }
 
   const displayTags = allTags.length > 0 ? allTags : PRESET_TAGS
@@ -90,7 +92,8 @@ export default function HomePage() {
         backdropFilter: 'blur(8px)',
         zIndex: 100,
       }}>
-        <div className="container" style={{
+        {/* Desktop header */}
+        <div className="desktop-header container" style={{
           display: 'flex', alignItems: 'center',
           justifyContent: 'space-between',
           padding: '16px 24px', gap: 16,
@@ -107,22 +110,75 @@ export default function HomePage() {
               style={{ fontSize: 11, padding: '8px 12px', letterSpacing: '0.05em' }}
             />
           </div>
-          <button
-            onClick={openFilter}
-            className="mobile-only"
-            style={{
-              flexShrink: 0,
-              background: activeTags.length > 0 ? 'var(--accent)' : 'transparent',
-              border: '1px solid var(--border)',
-              color: activeTags.length > 0 ? '#000' : 'var(--text)',
-              fontFamily: 'Space Mono', fontSize: 11, fontWeight: 700,
-              padding: '8px 14px', cursor: 'pointer', letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}
-          >
-            FILTRI {activeTags.length > 0 && `(${activeTags.length})`}
-          </button>
+        </div>
+
+        {/* Mobile header */}
+        <div className="mobile-header" style={{ padding: '0 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56 }}>
+            <h1 style={{ fontFamily: 'Bebas Neue', fontSize: 24, letterSpacing: '0.1em', color: 'var(--accent)', lineHeight: 1 }}>
+              LEARN TO RIDE
+            </h1>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {/* Search icon */}
+              <button
+                onClick={() => setSearchOpen(prev => !prev)}
+                style={{
+                  background: search ? 'var(--accent)' : 'transparent',
+                  border: '1px solid var(--border)',
+                  color: search ? '#000' : 'var(--text)',
+                  width: 40, height: 40,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', flexShrink: 0,
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </button>
+
+              {/* Filter icon */}
+              <button
+                onClick={openFilter}
+                style={{
+                  background: activeTags.length > 0 ? 'var(--accent)' : 'transparent',
+                  border: '1px solid var(--border)',
+                  color: activeTags.length > 0 ? '#000' : 'var(--text)',
+                  width: 40, height: 40,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', flexShrink: 0, position: 'relative',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+                </svg>
+                {activeTags.length > 0 && (
+                  <span style={{
+                    position: 'absolute', top: -6, right: -6,
+                    background: 'var(--accent2)', color: '#fff',
+                    width: 16, height: 16, borderRadius: '50%',
+                    fontSize: 9, fontFamily: 'Space Mono', fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {activeTags.length}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile search expand */}
+          {searchOpen && (
+            <div style={{ paddingBottom: 12 }}>
+              <input
+                type="text"
+                placeholder="SEARCH..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                autoFocus
+                style={{ fontSize: 13, padding: '10px 14px', letterSpacing: '0.05em', width: '100%' }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Desktop tag bar */}
@@ -148,7 +204,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Filter modal — mobile only */}
+      {/* Filter modal */}
       {filterOpen && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 200,
@@ -251,11 +307,14 @@ export default function HomePage() {
 
       <style>{`
         @media (min-width: 768px) {
+          .desktop-header { display: flex !important; }
           .desktop-tags { display: flex !important; }
-          .mobile-only { display: none !important; }
+          .mobile-header { display: none !important; }
         }
         @media (max-width: 767px) {
+          .desktop-header { display: none !important; }
           .desktop-tags { display: none !important; }
+          .mobile-header { display: block !important; }
         }
       `}</style>
     </div>
