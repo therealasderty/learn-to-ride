@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { supabase, type Trick } from '@/lib/supabase'
 import TrickCard from '@/components/TrickCard'
-import Link from 'next/link'
 
 const PRESET_TAGS = [
   'FS3','FS5','FS7','FS9',
@@ -74,14 +73,9 @@ export default function HomePage() {
           justifyContent: 'space-between',
           padding: '16px 24px', gap: 16,
         }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexShrink: 0 }}>
-            <h1 style={{ fontFamily: 'Bebas Neue', fontSize: 28, letterSpacing: '0.1em', color: 'var(--accent)', lineHeight: 1 }}>
-              LEARN TO RIDE
-            </h1>
-            <span style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'Space Mono', letterSpacing: '0.05em' }}>
-              {tricks.length} TRICKS
-            </span>
-          </div>
+          <h1 style={{ fontFamily: 'Bebas Neue', fontSize: 28, letterSpacing: '0.1em', color: 'var(--accent)', lineHeight: 1, flexShrink: 0 }}>
+            LEARN TO RIDE
+          </h1>
           <div style={{ flex: 1, maxWidth: 400 }}>
             <input
               type="text"
@@ -91,7 +85,6 @@ export default function HomePage() {
               style={{ fontSize: 11, padding: '8px 12px', letterSpacing: '0.05em' }}
             />
           </div>
-          <Link href="/admin" className="btn" style={{ flexShrink: 0 }}>+ ADD TRICK</Link>
         </div>
 
         <div style={{

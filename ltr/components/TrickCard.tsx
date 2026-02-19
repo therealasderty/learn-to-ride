@@ -9,8 +9,8 @@ interface TrickCardProps {
 }
 
 export default function TrickCard({ trick, onTagClick }: TrickCardProps) {
-  const [isPlaying, setIsPlaying] = useState(false)
   const [lightbox, setLightbox] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const lightboxVideoRef = useRef<HTMLVideoElement>(null)
   const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window)
@@ -21,6 +21,7 @@ export default function TrickCard({ trick, onTagClick }: TrickCardProps) {
   const isYoutube = trick.external_url?.includes('youtube') || trick.external_url?.includes('youtu.be')
   const isVimeo = trick.external_url?.includes('vimeo')
 
+  // Desktop hover
   const handleMouseEnter = () => {
     if (isVideo && videoRef.current && !isTouchDevice) {
       videoRef.current.play()
@@ -32,21 +33,6 @@ export default function TrickCard({ trick, onTagClick }: TrickCardProps) {
       videoRef.current.pause()
       videoRef.current.currentTime = 0
       setIsPlaying(false)
-    }
-  }
-
-  const handleTap = (e: React.MouseEvent) => {
-    if (isTouchDevice && !isExternal) {
-      e.stopPropagation()
-      if (isVideo && videoRef.current) {
-        if (isPlaying) {
-          videoRef.current.pause()
-          setIsPlaying(false)
-        } else {
-          videoRef.current.play()
-          setIsPlaying(true)
-        }
-      }
     }
   }
 
@@ -77,8 +63,6 @@ export default function TrickCard({ trick, onTagClick }: TrickCardProps) {
     if (lightbox && lightboxVideoRef.current) lightboxVideoRef.current.play()
   }, [lightbox])
 
-  const thumbnail = trick.thumbnail_url || trick.url
-
   return (
     <>
       <div
@@ -91,34 +75,41 @@ export default function TrickCard({ trick, onTagClick }: TrickCardProps) {
         }}
         onMouseOver={e => { if (!isTouchDevice) { e.currentTarget.style.borderColor = isExternal ? (isYoutube ? '#ff0000' : '#1ab7ea') : 'var(--accent)'; e.currentTarget.style.transform = 'translateY(-2px)' }}}
         onMouseOut={e => { if (!isTouchDevice) { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)' }}}
+        onClick={handleClick}
       >
-        <div
-          onClick={isTouchDevice ? handleTap : handleClick}
-          style={{ position: 'relative', overflow: 'hidden', background: '#000' }}
-        >
-          {/* External video — show thumbnail */}
+        <div style={{ position: 'relative', overflow: 'hidden', background: '#000' }}>
+
+          {/* External thumbnail */}
           {isExternal && trick.thumbnail_url && (
             <img src={trick.thumbnail_url} alt={trick.title}
               style={{ width: '100%', height: 'auto', display: 'block' }} />
           )}
 
-          {/* Local video */}
+          {/* Local video — autoplay loop on mobile, hover on desktop */}
           {!isExternal && isVideo && (
-            <video ref={videoRef} src={trick.url} loop muted playsInline
-              style={{ width: '100%', height: 'auto', display: 'block' }} />
+            <video
+              ref={videoRef}
+              src={trick.url}
+              loop
+              muted
+              playsInline
+              autoPlay={isTouchDevice}
+              style={{ width: '100%', height: 'auto', display: 'block' }}
+            />
           )}
 
-          {/* GIF or image */}
+          {/* GIF / image */}
           {!isExternal && !isVideo && trick.url && (
             <img src={trick.url} alt={trick.title}
               style={{ width: '100%', height: 'auto', display: 'block' }} />
           )}
 
-          {/* Play overlay for local video */}
-          {!isExternal && isVideo && (
+          {/* Desktop play overlay */}
+          {!isExternal && isVideo && !isTouchDevice && (
             <div style={{
               position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: isPlaying ? 'transparent' : 'rgba(0,0,0,0.3)', transition: 'background 0.2s ease',
+              pointerEvents: 'none',
             }}>
               {!isPlaying && (
                 <div style={{ width: 36, height: 36, border: '2px solid var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -132,7 +123,7 @@ export default function TrickCard({ trick, onTagClick }: TrickCardProps) {
           {isExternal && (
             <div style={{
               position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(0,0,0,0.3)',
+              background: 'rgba(0,0,0,0.3)', pointerEvents: 'none',
             }}>
               <div style={{
                 width: 44, height: 44,
@@ -154,13 +145,9 @@ export default function TrickCard({ trick, onTagClick }: TrickCardProps) {
           {isVimeo && (
             <div style={{ position: 'absolute', top: 8, right: 8, background: '#1ab7ea', color: '#fff', fontSize: 9, fontFamily: 'Space Mono', fontWeight: 700, padding: '2px 5px', letterSpacing: '0.1em' }}>VIMEO</div>
           )}
-
-          {isTouchDevice && isPlaying && (
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: 'var(--accent)' }} />
-          )}
         </div>
 
-        <div onClick={isTouchDevice ? undefined : handleClick} style={{ padding: '10px 12px 12px' }}>
+        <div style={{ padding: '10px 12px 12px' }}>
           <div style={{ fontFamily: 'Bebas Neue', fontSize: 18, letterSpacing: '0.05em', color: 'var(--text)', marginBottom: 6, lineHeight: 1.1 }}>
             {trick.title}
           </div>
@@ -177,6 +164,7 @@ export default function TrickCard({ trick, onTagClick }: TrickCardProps) {
         </div>
       </div>
 
+      {/* Lightbox */}
       {lightbox && (
         <div onClick={closeLightbox} style={{
           position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.95)',
